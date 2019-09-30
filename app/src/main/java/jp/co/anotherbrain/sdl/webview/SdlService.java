@@ -177,11 +177,11 @@ public class SdlService extends Service {
 								subscribeRequest.setOnRPCResponseListener(new OnRPCResponseListener() {
 									@Override
 									public void onResponse(int correlationId, RPCResponse response) {
-									if(response.getSuccess()){
-										Log.i("SdlService", "Successfully subscribed to vehicle data.");
-									}else{
-										Log.i("SdlService", "Request to subscribe to vehicle data was rejected.");
-									}
+										if(response.getSuccess()){
+											Log.i("SdlService", "Successfully subscribed to vehicle data.");
+										}else{
+											Log.i("SdlService", "Request to subscribe to vehicle data was rejected.");
+										}
 									}
 								});
 								sdlManager.sendRPC(subscribeRequest);
@@ -196,24 +196,6 @@ public class SdlService extends Service {
 								}
 
 							}
-						}
-					});
-
-
-					// Subscribe Vehicle Data Listener
-                    sdlManager.addOnRPCNotificationListener(FunctionID.ON_VEHICLE_DATA, new OnRPCNotificationListener() {
-						@Override
-						public void onNotified(RPCNotification notification) {
-							OnVehicleData onVehicleDataNotification = (OnVehicleData) notification;
-
-							Double speed = onVehicleDataNotification.getSpeed();
-							if (speed != null) {
-								Log.i("SdlService", "Speed was updated to: " + speed);
-								Intent localBroadCastIntent = new Intent(SdlService.BROADCAST_SPEED);
-								localBroadCastIntent.putExtra("SPEED", speed.intValue());
-								LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(localBroadCastIntent);
-							}
-
 						}
 					});
 
@@ -271,67 +253,28 @@ public class SdlService extends Service {
 
 
 
-    public static class MyDisplay extends SdlRemoteDisplay{
-
-		private SpeedBroadcastReceiver speedBroadcastReceiver = null;
-
-		private Context context;
-		private WebView webView;
-
-		public class SpeedBroadcastReceiver extends BroadcastReceiver {
-
-			private MyDisplay myDisplay;
-
-			public SpeedBroadcastReceiver(MyDisplay myDisplay) {
-				this.myDisplay = myDisplay;
-			}
-
-			@Override
-			public void onReceive(Context context, Intent intent)
-			{
-				if (this.myDisplay.webView != null) {
-					// ブロードキャストが呼ばれた時
-					String speed = String.valueOf(intent.getIntExtra("SPEED", 0));
-					this.myDisplay.webView.loadUrl("javascript:setSpeed(" + speed + ");");
-				}
-			}
-		}
+	public static class MyDisplay extends SdlRemoteDisplay{
 
 		public MyDisplay(Context context, Display display) {
-            super(context, display);
-			this.context = context;
-        }
+			super(context, display);
+		}
 
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
+		@Override
+		protected void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
 
 			setContentView(R.layout.stream);
 
-			this.webView = findViewById(R.id.webView);
+			WebView webView = findViewById(R.id.webView);
 
-			this.webView.setWebViewClient(new WebViewClient());
-			this.webView.getSettings().setJavaScriptEnabled(true);
-			String userAgent = this.webView.getSettings().getUserAgentString();
-			this.webView.getSettings().setUserAgentString(userAgent + " SmartDeviceLink");
+			webView.setWebViewClient(new WebViewClient());
+			webView.getSettings().setJavaScriptEnabled(true);
 
 			// インターネット上の HTML も表示できる
-			// webView.loadUrl("https://www.google.co.jp/");
-			this.webView.loadUrl("file:///android_asset/index.html");
-
-			// ブロードキャストを設定
-			if(this.speedBroadcastReceiver == null) {
-				// ローカルブロードキャスト用IntentFilterを生成
-				IntentFilter intentFilter = new IntentFilter(SdlService.BROADCAST_SPEED);
-				// ローカルブロードキャストを受け取るレシーバを設定
-				this.speedBroadcastReceiver = new SpeedBroadcastReceiver(this);
-				// ローカルブロードキャストを設定
-				LocalBroadcastManager.getInstance(this.context).registerReceiver(this.speedBroadcastReceiver, intentFilter);
-			}
+			webView.loadUrl("https://www.google.co.jp/");
 
 		}
 
-    }
+	}
 
 }
